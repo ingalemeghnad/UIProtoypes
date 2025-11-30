@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Payments Ops Console — Single Workspace Flow</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{ --primary:#2563eb; --bg:#f3f4f6; --muted:#6b7280; }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:var(--bg); padding:18px;}
+    .app-shell{ max-width:1200px; margin:0 auto; background:#fff; border-radius:12px; box-shadow:0 18px 45px rgba(2,6,23,0.08); overflow:hidden; display:flex; flex-direction:column; min-height:76vh;}
+    header{ display:flex; justify-content:space-between; align-items:center; padding:14px 20px; background:linear-gradient(90deg,#0ea5e9,var(--primary)); color:#fff;}
+    header h1{ margin:0; font-size:1rem;}
+    header .sub{ font-size:.85rem; opacity:.95; }
+    .main{ display:flex; gap:12px; padding:12px; flex:1; }
+    /* Tiles column (centered) */
+    .tiles-wrap{ width:100%; display:flex; align-items:flex-start; justify-content:center; padding:24px; }
+    .tiles-grid{ width:100%; max-width:880px; display:grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+    .tile{ background:#f9fafb; border:1px solid #e9eef8; padding:16px; border-radius:10px; cursor:pointer; display:flex; flex-direction:column; min-height:96px; transition:all .12s; }
+    .tile:hover{ transform:translateY(-4px); border-color:var(--primary); background:#eff6ff; }
+    .tile h3{ margin:0 0 8px 0; font-size:1rem; }
+    .tile p{ margin:0; color:var(--muted); font-size:0.9rem; }
+    /* Workspace (full content area) */
+    .workspace { display:none; padding:16px; }
+    .workspace.active { display:block; }
+    .workspace .workspace-header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+    .btn{ background:var(--primary); color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;}
+    .btn.secondary{ background:#fff; color:#111; border:1px solid #e6eef8; box-shadow:none; }
+    .card{ background:#fff; border-radius:12px; border:1px solid rgba(148,163,184,0.12); padding:12px; box-shadow:0 8px 20px rgba(2,6,23,0.04); }
+    .muted{ color:var(--muted); font-size:12px; }
+
+    /* validation UI embedded styles (kept compact) */
+    .validation-root{ padding:8px; display:grid; grid-template-columns:260px 1fr; gap:12px; align-items:start; }
+    .country-list{ display:flex; flex-direction:column; gap:6px; max-height:56vh; overflow:auto; background:#f9fafb; padding:6px; border-radius:8px; }
+    .country-item{ padding:8px; border-radius:8px; display:flex; justify-content:space-between; cursor:pointer; border:1px solid transparent; }
+    .country-item:hover{ background:#eef6ff; }
+    .country-item.active{ background:#e6f0ff; border-left:3px solid var(--primary); padding-left:6px; }
+    .tabs-mini{ display:inline-flex; gap:6px; padding:6px; background:#f3f4f6; border-radius:999px; }
+    .table-wrapper{ border-radius:8px; border:1px solid #eef2f9; overflow:hidden; margin-top:8px; }
+    table{ width:100%; border-collapse:collapse; font-size:13px;}
+    th,td{ padding:8px 10px; border-bottom:1px solid #eef2f9; text-align:left; }
+    thead{ background:#fbfdff; color:#6b7280; font-size:12px; }
+    .badge{ background:#eef6ff; color:var(--primary); padding:4px 8px; border-radius:999px; font-size:12px; }
+    .toggle{ display:inline-flex; align-items:center; gap:8px; cursor:pointer; }
+    .toggle-track{ width:30px; height:16px; border-radius:999px; background:#e5e7eb; position:relative; }
+    .toggle-thumb{ width:12px; height:12px; position:absolute; left:2px; top:2px; background:#fff; border-radius:999px; box-shadow:0 1px 3px rgba(2,6,23,0.12); }
+    .toggle input{ display:none; }
+    .toggle input:checked + .toggle-track{ background:var(--primary); }
+    .toggle input:checked + .toggle-track .toggle-thumb{ transform:translateX(14px); }
+
+    .banner{ display:none; background:#fffbeb; border:1px solid #facc15; padding:8px; border-radius:8px; color:#854d0e; margin-top:8px;}
+    .toast{ position:fixed; right:18px; bottom:18px; background:#022c22; color:#ecfdf5; padding:8px 12px; border-radius:999px; display:none; }
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(2,6,23,0.35); display:none; align-items:center; justify-content:center; z-index:50;}
+    .modal{ background:#fff; border-radius:10px; padding:12px; width:360px; box-shadow:0 20px 50px rgba(2,6,23,0.35); }
+    @media (max-width:1000px){
+      .validation-root{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <div>
+        <h1>Payments Ops Console</h1>
+        <div class="sub">Login → Tiles → Open workspace (single view)</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div id="userPill" style="display:none;background:rgba(255,255,255,0.12);padding:6px 10px;border-radius:999px;"></div>
+      </div>
+    </header>
+
+    <!-- Login screen -->
+    <div id="loginArea" style="padding:20px;">
+      <div style="max-width:420px;margin:0 auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 12px 30px rgba(2,6,23,0.06);">
+        <h2 style="margin:0 0 8px 0">Sign in</h2>
+        <div style="color:var(--muted);margin-bottom:12px">Use demo credentials</div>
+        <form id="loginForm">
+          <div style="margin-bottom:8px">
+            <label style="font-weight:600">User ID</label>
+            <input id="loginUser" type="text" style="width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef8" />
+          </div>
+          <div style="margin-bottom:8px">
+            <label style="font-weight:600">Password</label>
+            <input id="loginPass" type="password" style="width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef8" />
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn" type="submit">Sign in</button>
+            <button class="btn secondary" type="button" id="demoCreds">Show demo creds</button>
+          </div>
+          <div id="loginError" style="color:#b91c1c;margin-top:8px;display:none">Invalid credentials</div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tiles view -->
+    <div id="tilesArea" style="display:none;padding:18px;">
+      <div class="tiles-wrap">
+        <div class="tiles-grid" id="tilesGrid">
+          <div class="tile" data-key="payment-search"><h3>Payment Search</h3><p>Find payments by reference, party or amount</p></div>
+          <div class="tile" data-key="status-inquiry"><h3>Payment Status Inquiry</h3><p>Lookup current status and timeline</p></div>
+          <div class="tile" data-key="pom-config"><h3>POM Config</h3><p>Manage orchestration rules</p></div>
+          <div class="tile" data-key="validation-rule-config"><h3>Validation Rule Config</h3><p>Field-level validations, regex, lookups, expressions</p></div>
+          <div class="tile" data-key="payment-cancellation"><h3>Payment Cancellation</h3><p>Submit cancellation requests</p></div>
+          <div class="tile" data-key="payment-return"><h3>Payment Return</h3><p>Initiate returns with accounting</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Workspace (single full area) -->
+    <div id="workspace" class="workspace">
+      <div class="workspace-header">
+        <div>
+          <strong id="workspaceTitle">Workspace</strong>
+          <div class="muted" id="workspaceSubtitle">Form</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="backBtn" class="btn secondary">Back to Dashboard</button>
+          <button id="logoutBtn" class="btn secondary">Logout</button>
+        </div>
+      </div>
+
+      <div id="workspaceBody" class="card">
+        <!-- content injected dynamically -->
+        <div id="welcome" style="padding:18px;border-radius:8px;background:#fbfdff;border:1px solid #eef6ff;">Workspace will appear here when you open a tile.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- small modal & toast -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-hidden="true">
+    <div class="modal" id="modalContent">
+      <div style="display:flex;justify-content:space-between;align-items:center;"><strong id="modalTitle">Modal</strong><button id="modalClose">×</button></div>
+      <div id="modalBody" style="margin-top:8px;font-size:13px;color:var(--muted)"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+        <button id="modalCancel" class="btn secondary">Cancel</button>
+        <button id="modalConfirm" class="btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast">Saved</div>
+
+<script>
+/* === Demo users === */
+const USERS = {
+  inquiryUser: { password: 'password1', role:'INQUIRY' },
+  opsAdmin: { password: 'password2', role:'OPS_FULL' }
+};
+
+/* DOM refs */
+const loginArea = document.getElementById('loginArea');
+const tilesArea = document.getElementById('tilesArea');
+const workspace = document.getElementById('workspace');
+const workspaceBody = document.getElementById('workspaceBody');
+const workspaceTitle = document.getElementById('workspaceTitle');
+const workspaceSubtitle = document.getElementById('workspaceSubtitle');
+const loginForm = document.getElementById('loginForm');
+const loginUser = document.getElementById('loginUser');
+const loginPass = document.getElementById('loginPass');
+const loginError = document.getElementById('loginError');
+const userPill = document.getElementById('userPill');
+
+let currentUser = null;
+let currentTile = null;
+
+/* login flow */
+loginForm.addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const u = (loginUser.value || '').trim();
+  const p = loginPass.value || '';
+  if (USERS[u] && USERS[u].password === p){
+    currentUser = { username: u, role: USERS[u].role };
+    loginError.style.display = 'none';
+    // show tiles
+    loginArea.style.display = 'none';
+    tilesArea.style.display = '';
+    workspace.classList.remove('active');
+    userPill.style.display = 'inline-block';
+    userPill.innerText = `${u} · ${USERS[u].role === 'INQUIRY' ? 'Inquiry' : 'Ops'}`;
+    // restrict tile visibility for inquiry user
+    if (USERS[u].role === 'INQUIRY'){
+      document.querySelectorAll('.tile').forEach(t=>{
+        const key = t.dataset.key;
+        if (key === 'pom-config' || key === 'validation-rule-config' || key === 'payment-cancellation' || key === 'payment-return'){
+          t.style.display = 'none';
+        } else t.style.display = '';
+      });
+    } else {
+      document.querySelectorAll('.tile').forEach(t=> t.style.display = '');
+    }
+  } else {
+    loginError.style.display = 'block';
+  }
+});
+
+/* demo creds helper */
+document.getElementById('demoCreds').addEventListener('click', ()=>{
+  alert('Demo users:\n\ninquiryUser / password1\nopsAdmin / password2');
+});
+
+/* tile clicks -> open single workspace */
+document.querySelectorAll('.tile').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    const key = t.dataset.key;
+    openWorkspaceFor(key);
+  });
+});
+
+function openWorkspaceFor(key){
+  currentTile = key;
+  // hide tiles area and show workspace (single full area)
+  tilesArea.style.display = 'none';
+  workspace.classList.add('active');
+  // update header
+  workspaceTitle.innerText = (document.querySelector(`.tile[data-key="${key}"] h3`).innerText) || 'Workspace';
+  workspaceSubtitle.innerText = (document.querySelector(`.tile[data-key="${key}"] p`).innerText) || '';
+  // load content
+  loadWorkspaceContent(key);
+}
+
+/* back */
+document.getElementById('backBtn').addEventListener('click', ()=>{
+  workspace.classList.remove('active');
+  tilesArea.style.display = '';
+  workspaceBody.innerHTML = '<div id="welcome" style="padding:18px;border-radius:8px;background:#fbfdff;border:1px solid #eef6ff;">Workspace will appear here when you open a tile.</div>';
+});
+
+/* logout */
+document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  currentUser = null;
+  currentTile = null;
+  userPill.style.display = 'none';
+  workspace.classList.remove('active');
+  loginArea.style.display = '';
+  tilesArea.style.display = 'none';
+  loginUser.value = '';
+  loginPass.value = '';
+});
+
+/* load simple placeholder content or the Validation UI for that tile */
+function loadWorkspaceContent(key){
+  workspaceBody.innerHTML = '';
+  if (key === 'validation-rule-config'){
+    // insert the full validation UI (derived from uploaded mock)
+    workspaceBody.appendChild(buildValidationUI());
+  } else {
+    // a simple card with a mock form
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<h3 style="margin-top:0">${key.replace(/-/g,' ')}</h3>
+      <div class="muted">This is a prototype area for ${key}.  Submit will be logged to console.</div>
+      <div style="margin-top:12px"><input placeholder="sample input" style="padding:8px;border-radius:8px;border:1px solid #e6eef8;width:100%" /></div>
+      <div style="margin-top:12px;display:flex;gap:8px"><button class="btn" onclick="console.log('submit:${key}')">Submit</button><button class="btn secondary" onclick="console.log('cancel:${key}')">Cancel</button></div>`;
+    workspaceBody.appendChild(card);
+  }
+}
+
+/* ====== Validation UI builder (same prototype behaviour as earlier) ====== */
+function buildValidationUI(){
+  const root = document.createElement('div');
+  root.className = 'validation-root';
+
+  const left = document.createElement('div');
+  left.className = 'card';
+  left.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-weight:700">Countries</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn secondary" id="addCountryBtn">＋ Add</button>
+      <button class="btn secondary" id="deleteCountryBtn">🗑 Delete</button>
+    </div>
+  </div>
+  <div class="country-list" id="countryListArea"></div>
+  <div class="muted" style="margin-top:8px;font-size:12px">Mandatory attributes: presence-only. Complex rules for other checks.</div>`;
+
+  const right = document.createElement('div');
+  right.className = 'card';
+  right.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="tabs-mini">
+        <button class="tab-mini active" data-target="mandatory">Mandatory Attributes <span class="muted" style="margin-left:6px" id="countMandatory">(3)</span></button>
+        <button class="tab-mini" data-target="complex">Complex Rules <span class="muted" style="margin-left:6px" id="countComplex">(3)</span></button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="badge" id="scopeChip">Scope: IN · International</div>
+      <button class="btn secondary" id="discardChanges" disabled>Discard</button>
+      <button class="btn" id="saveCountryConfig" disabled>💾 Save country config</button>
+    </div>
+  </div>
+  <div style="margin-top:8px;display:flex;gap:8px">
+    <button class="btn secondary" id="addAttributeBtn">＋ Add attribute</button>
+    <button class="btn secondary" id="addRuleBtn" disabled>＋ Add rule</button>
+  </div>
+
+  <div class="banner" id="dirtyBanner" style="display:none;margin-top:10px">Unsaved changes — Save before deploy</div>
+
+  <div id="mandatoryArea" style="margin-top:10px" class="table-wrapper">
+    <table id="mandatoryTable">
+      <thead><tr><th>Attribute</th><th>Level</th><th>Mandatory</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr data-attr-id="DBTR_ACCT">
+          <td>Debtor Account<div class="muted"><code>dbtrAcct.iban</code></div></td>
+          <td><span class="badge">Header</span></td>
+          <td><label class="toggle"><input type="checkbox" checked/><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="muted">Required</span></label></td>
+          <td class="muted">Global</td>
+        </tr>
+        <tr data-attr-id="PURPOSE_CODE">
+          <td>Purpose Code<div class="muted"><code>pmtTpInf.purp.cd</code></div></td>
+          <td><span class="badge">Header</span></td>
+          <td><label class="toggle"><input type="checkbox" checked/><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="muted">Required</span></label></td>
+          <td class="muted">Local override</td>
+        </tr>
+        <tr data-attr-id="ULTMT_CDTR_NAME">
+          <td>Ultimate Beneficiary Name<div class="muted"><code>ultmtCdtr.nm</code></div></td>
+          <td><span class="badge">Header</span></td>
+          <td><label class="toggle"><input type="checkbox"/><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="muted">Optional</span></label></td>
+          <td class="muted">Country only</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="complexArea" class="table-wrapper" style="display:none;margin-top:10px">
+    <table id="complexTable">
+      <thead><tr><th>Rule Code</th><th>Rule Name</th><th>Severity</th><th>Scope</th><th>Status</th><th>Last Updated</th></tr></thead>
+      <tbody>
+        <tr data-rule-code="IN_PURPOSE_LOOKUP">
+          <td><code>IN_PURPOSE_LOOKUP</code></td>
+          <td>Validate Purpose Code Against Ref Data<div class="muted">Lookup against IN specific purpose code table</div></td>
+          <td><div class="muted">Error</div></td>
+          <td><div class="muted">All cross-border credits</div></td>
+          <td><label class="toggle"><input type="checkbox" checked/><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="muted">Enabled</span></label></td>
+          <td class="muted">12 Nov 2025</td>
+        </tr>
+        <tr data-rule-code="IN_TAX_REPORTING_THRESHOLD">
+          <td><code>IN_TAX_REPORTING_THRESHOLD</code></td>
+          <td>High Value Tax Reporting Threshold<div class="muted">Flags payments above threshold</div></td>
+          <td><div class="muted">Warning</div></td>
+          <td><div class="muted">International credits</div></td>
+          <td><label class="toggle"><input type="checkbox" checked/><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="muted">Enabled</span></label></td>
+          <td class="muted">05 Nov 2025</td>
+        </tr>
+        <tr data-rule-code="IN_BENE_ADDRESS_REQUIRED">
+          <td><code>IN_BENE_ADDRESS_REQUIRED</code></td>
+          <td>Beneficiary Address for Cross-Border<div class="muted">Enforce full address for non-resident beneficiaries</div></td>
+          <td><div class="muted">Error</div></td>
+          <td><div class="muted">Cross-border credits only</div></td>
+          <td><label class="toggle"><input type="checkbox"/><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="muted">Disabled</span></label></td>
+          <td class="muted">01 Nov 2025</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+    <div class="muted">Presence-only checks are handled in the mandatory tab. Complex validation rules are in complex rules.</div>
+  </div>`;
+
+  root.appendChild(left);
+  root.appendChild(right);
+
+  // sample countries
+  const countries = [
+    { code:'IN', name:'India', currency:'INR', schemes:'SWIFT, RTGS-XB'},
+    { code:'GB', name:'United Kingdom', currency:'GBP', schemes:'SWIFT, CHAPS-XB'},
+    { code:'US', name:'United States', currency:'USD', schemes:'SWIFT, FEDWIRE-XB'},
+    { code:'AE', name:'United Arab Emirates', currency:'AED', schemes:'SWIFT, LOCAL-XB'}
+  ];
+
+  const countryListArea = left.querySelector('#countryListArea');
+  countries.forEach((c, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'country-item' + (idx===0 ? ' active':'');
+    row.dataset.code = c.code;
+    row.innerHTML = `<div><div style="font-weight:600">${c.name}</div><div class="muted" style="font-size:12px">${c.code} · ${c.currency}</div></div><div class="badge">${c.schemes}</div>`;
+    row.addEventListener('click', ()=>{
+      const active = left.querySelector('.country-item.active');
+      if (active && active.dataset.code === row.dataset.code) return;
+      if (window.validationDirty){
+        if (!confirm('You have unsaved changes. Switch and discard?')) return;
+        markClean();
+      }
+      left.querySelectorAll('.country-item').forEach(el=>el.classList.remove('active'));
+      row.classList.add('active');
+      right.querySelector('#scopeChip').innerText = `Scope: ${row.dataset.code} · International`;
+    });
+    countryListArea.appendChild(row);
+  });
+
+  // tab toggles and behaviour
+  const tabBtns = right.querySelectorAll('.tab-mini');
+  const mandatoryArea = right.querySelector('#mandatoryArea');
+  const complexArea = right.querySelector('#complexArea');
+  const addAttributeBtn = right.querySelector('#addAttributeBtn');
+  const addRuleBtn = right.querySelector('#addRuleBtn');
+  const saveBtn = right.querySelector('#saveCountryConfig');
+  const discardBtn = right.querySelector('#discardChanges');
+  const dirtyBanner = right.querySelector('#dirtyBanner');
+  const countMandatory = right.querySelector('#countMandatory');
+  const countComplex = right.querySelector('#countComplex');
+
+  function setActiveSubTab(target){
+    tabBtns.forEach(b=> b.classList.toggle('active', b.dataset.target === target));
+    if (target==='mandatory'){ mandatoryArea.style.display=''; complexArea.style.display='none'; addAttributeBtn.disabled=false; addRuleBtn.disabled=true; }
+    else { mandatoryArea.style.display='none'; complexArea.style.display=''; addAttributeBtn.disabled=true; addRuleBtn.disabled=false; }
+  }
+  tabBtns.forEach(b=> b.addEventListener('click', ()=> setActiveSubTab(b.dataset.target)));
+  setActiveSubTab('mandatory');
+
+  function markDirty(){ window.validationDirty = true; dirtyBanner.style.display = 'block'; saveBtn.disabled=false; discardBtn.disabled=false; }
+  function markClean(){ window.validationDirty = false; dirtyBanner.style.display = 'none'; saveBtn.disabled=true; discardBtn.disabled=true; }
+
+  root.addEventListener('change', (ev)=>{
+    if (ev.target.matches('.toggle input')) markDirty();
+  });
+
+  addAttributeBtn.addEventListener('click', ()=>{
+    openModal({
+      title:'Add mandatory attribute',
+      body:`<div class="muted">Pick an attribute from the small catalog:</div><select id="attrSelect" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;"><option value="DBTR_NAME">Debtor Name (DBTR_NAME)</option><option value="CDTR_NAME">Beneficiary Name (CDTR_NAME)</option><option value="AMOUNT">Amount (AMOUNT)</option></select>`,
+      onConfirm: ()=>{
+        const sel = document.getElementById('attrSelect').value;
+        const tbody = right.querySelector('#mandatoryTable tbody');
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-attr-id', sel);
+        tr.innerHTML = `<td>${sel}<div class="muted"><code>field</code></div></td><td><span class="badge">Header</span></td><td><label class="toggle"><input type="checkbox"/><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="muted">Optional</span></label></td><td class="muted">Country only</td>`;
+        tbody.appendChild(tr);
+        countMandatory.innerText = `(${tbody.rows.length})`;
+        markDirty();
+      }
+    });
+  });
+
+  addRuleBtn.addEventListener('click', ()=>{
+    openModal({
+      title:'Add complex rule',
+      body:`<div class="muted">Pick rule:</div><select id="ruleSelectMini" style="width:100%;margin-top:8px;padding:8px;border-radius:8px;"><option value="PURPOSE_LOOKUP">PURPOSE_LOOKUP</option><option value="DEAL_REF_REQUIRED">DEAL_REF_REQUIRED</option><option value="TAX_REPORTING">TAX_REPORTING</option></select>`,
+      onConfirm: ()=>{
+        const v = document.getElementById('ruleSelectMini').value;
+        const tbody = right.querySelector('#complexTable tbody');
+        const tr = document.createElement('tr');
+        const code = (document.querySelector('.country-item.active')?.dataset.code || 'XX') + '_' + v;
+        tr.setAttribute('data-rule-code', code);
+        tr.innerHTML = `<td><code>${code}</code></td><td>${v}<div class="muted">Added rule</div></td><td class="muted">Error</td><td class="muted">International</td><td><label class="toggle"><input type="checkbox" checked/><span class="toggle-track"><span class="toggle-thumb"></span></span><span class="muted">Enabled</span></label></td><td class="muted">Draft</td>`;
+        tbody.appendChild(tr);
+        countComplex.innerText = `(${tbody.rows.length})`;
+        markDirty();
+      }
+    });
+  });
+
+  saveBtn.addEventListener('click', ()=>{ markClean(); showToast('Saved country config.'); });
+  discardBtn.addEventListener('click', ()=>{ if (!confirm('Discard unsaved changes?')) return; markClean(); showToast('Discarded changes.'); });
+
+  left.querySelector('#deleteCountryBtn').addEventListener('click', ()=>{
+    const active = left.querySelector('.country-item.active');
+    if (!active) return;
+    if (!confirm(`Delete configuration for ${active.dataset.code}?`)) return;
+    active.remove();
+    const first = left.querySelector('.country-item');
+    if (first) first.classList.add('active');
+    right.querySelector('#scopeChip').innerText = `Scope: ${first?.dataset.code || 'IN'} · International`;
+    markClean();
+    showToast('Country deleted (prototype)');
+  });
+
+  function openModal({title, body, onConfirm}){
+    const mb = document.getElementById('modalBackdrop');
+    document.getElementById('modalTitle').innerText = title;
+    document.getElementById('modalBody').innerHTML = body;
+    mb.style.display = 'flex';
+    document.getElementById('modalConfirm').onclick = ()=>{ if (onConfirm) onConfirm(); mb.style.display='none'; };
+    document.getElementById('modalCancel').onclick = ()=> mb.style.display='none';
+    document.getElementById('modalClose').onclick = ()=> mb.style.display='none';
+  }
+
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.display = 'block';
+    setTimeout(()=> t.style.display='none',1400);
+  }
+
+  const countMand = right.querySelector('#mandatoryTable tbody').rows.length;
+  const countComp = right.querySelector('#complexTable tbody').rows.length;
+  right.querySelector('#countMandatory').innerText = `(${countMand})`;
+  right.querySelector('#countComplex').innerText = `(${countComp})`;
+
+  return root;
+}
+
+/* modal & toast wiring */
+document.getElementById('modalClose').addEventListener('click', ()=> document.getElementById('modalBackdrop').style.display='none');
+document.getElementById('modalCancel').addEventListener('click', ()=> document.getElementById('modalBackdrop').style.display='none');
+
+</script>
+</body>
+</html>
