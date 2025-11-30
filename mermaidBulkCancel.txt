@@ -1,0 +1,77 @@
+sequenceDiagram
+  autonumber
+
+  participant OpsUI as Ops UI / Channel
+  participant POM_API as POM API
+  participant POM_DB as POM Store
+  participant Worker as POM Bulk Worker
+  participant ODS as ODS API
+  participant Engine as Payment Engine
+
+  %% 1. Bulk cancel request
+
+  OpsUI ->> POM_API: POST /bulk-cancellations (orderIds, reason, bulkRequestId)
+  POM_API ->> POM_DB: Validate and persist BulkJob (status=RECEIVED, items)
+  POM_DB -->> POM_API: BulkJob saved
+  POM_API -->> OpsUI: 202 Accepted (bulkRequestId, status=IN_PROGRESS)
+
+  %% 2. Worker picks up batch
+
+  POM_API ->> Worker: Enqueue bulk job or event
+  Worker ->> POM_DB: Load BulkJob and items
+  POM_DB -->> Worker: Job and order list
+
+  %% 3. For each order: decide path (with ODS lookup if needed)
+
+  loop For each order
+    Worker ->> POM_DB: Load PaymentOrder status
+    alt Status available in POM
+      POM_DB -->> Worker: Current status
+    else Status not available or stale
+      POM_DB -->> Worker: Status missing or unknown
+      Worker ->> ODS: GET payment status (orderId)
+      ODS -->> Worker: Status from ODS
+      Worker ->> POM_DB: Optionally persist or cache latest status
+    end
+
+    alt Phase A (POM-only cancellable)
+      Worker ->> POM_DB: Update PaymentOrder status = CANCELLED
+      Worker ->> POM_DB: Update BulkItem result = CANCELLED_INTERNAL
+    else Phase B (Engine cancel)
+      Worker ->> POM_DB: Create CancelRequest status = SENT_TO_ENGINE
+      Worker ->> Engine: POST /payments/{id}/cancel (cancelRequestId, reason)
+      Engine -->> Worker: 202 Accepted or immediate result
+      Worker ->> POM_DB: Update BulkItem result = PENDING_ENGINE
+    else Phase C (Not cancellable)
+      Worker ->> POM_DB: Update BulkItem result = NOT_CANCELLABLE
+    end
+  end
+
+  %% 4. Engine responses (async or sync-like)
+
+  loop For each engine cancel
+    Engine ->> POM_API: Callback or event (cancelRequestId, outcome)
+    POM_API ->> POM_DB: Load CancelRequest and PaymentOrder
+
+    alt Engine cancel success
+      POM_API ->> POM_DB: Update PaymentOrder status = CANCELLED
+      POM_API ->> POM_DB: Update CancelRequest status = SUCCESS
+      POM_API ->> POM_DB: Update BulkItem result = CANCELLED_ENGINE
+    else Engine cancel failed
+      POM_API ->> POM_DB: Update CancelRequest status = FAILED
+      POM_API ->> POM_DB: Update BulkItem result = FAILED_CANCEL
+    end
+  end
+
+  %% 5. Bulk job completion
+
+  Worker ->> POM_DB: Recalculate job summary (success, failed, notCancellable)
+  POM_DB -->> Worker: Totals updated
+  Worker ->> POM_DB: Update BulkJob status = COMPLETED or COMPLETED_WITH_ERRORS
+
+  %% 6. Ops UI checks status
+
+  OpsUI ->> POM_API: GET /bulk-cancellations/{bulkRequestId}
+  POM_API ->> POM_DB: Load BulkJob and items
+  POM_DB -->> POM_API: Job summary and per-item results
+  POM_API -->> OpsUI: Response with bulk summary and outcomes

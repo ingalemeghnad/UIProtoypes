@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Payments Ops Console - Tabs Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top left, #e0f2fe, #f3f4f6);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Login screen */
+    #login-screen {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+      padding: 28px 26px 26px;
+    }
+
+    .login-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.1rem;
+    }
+
+    .login-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+      color: #374151;
+    }
+
+    .input {
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: none;
+      padding: 0.55rem 1.4rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      margin-top: 1.1rem;
+      width: 100%;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s;
+      box-shadow: 0 10px 22px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 16px 30px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-small {
+      padding: 0.4rem 0.9rem;
+      width: auto;
+      font-size: 0.8rem;
+      box-shadow: none;
+      margin-top: 0;
+    }
+
+    .login-footer {
+      margin-top: 1.3rem;
+      font-size: 0.78rem;
+      color: #6b7280;
+      line-height: 1.35;
+    }
+
+    .demo-creds {
+      margin-top: 0.75rem;
+      padding: 0.65rem 0.7rem;
+      border-radius: 10px;
+      background: #f9fafb;
+      border: 1px dashed #e5e7eb;
+      font-size: 0.78rem;
+    }
+
+    .demo-creds code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: #1118270a;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-size: 0.76rem;
+    }
+
+    .error-msg {
+      margin-top: 0.6rem;
+      font-size: 0.8rem;
+      color: #b91c1c;
+    }
+
+    /* Main app layout */
+    #app {
+      width: 100%;
+      max-width: 1200px;
+      min-height: 520px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid #e5e7eb;
+      background: linear-gradient(to right, #1d4ed8, #2563eb, #38bdf8);
+      color: white;
+    }
+
+    .app-header-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .app-subtitle {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      background: rgba(15, 23, 42, 0.15);
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+    }
+
+    .user-role {
+      padding: 0.05rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.3);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .logout-btn {
+      border: none;
+      background: rgba(15, 23, 42, 0.12);
+      border-radius: 999px;
+      color: #f9fafb;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.12s, transform 0.08s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(15, 23, 42, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .app-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: radial-gradient(circle at top left, #eff6ff, #ffffff);
+    }
+
+    /* DASHBOARD VIEW */
+    #dashboard-view {
+      padding: 14px 16px 18px;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .dashboard-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .tiles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .tile {
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      padding: 12px 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 90px;
+      transition: border-color 0.12s, box-shadow 0.12s, transform 0.08s, background 0.12s;
+    }
+
+    .tile:hover {
+      border-color: #2563eb;
+      background: #eff6ff;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .tile-name {
+      margin-bottom: 0.3rem;
+    }
+
+    .tile-tag {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    /* WORKSPACE VIEW (TABS + FORMS) */
+    #workspace-view {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .workspace-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px 0;
+    }
+
+    .workspace-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .tabs-bar {
+      margin-top: 8px;
+      padding: 0 10px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 9px;
+      font-size: 0.8rem;
+      border-radius: 999px 999px 0 0;
+      border: 1px solid #d1d5db;
+      border-bottom: none;
+      background: #f3f4f6;
+      cursor: pointer;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+
+    .tab.active {
+      background: #ffffff;
+      border-color: #2563eb;
+      color: #1f2937;
+      box-shadow: 0 -2px 6px rgba(15, 23, 42, 0.12);
+    }
+
+    .tab-close {
+      font-size: 0.8rem;
+      border-radius: 999px;
+      width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .tab-close:hover {
+      background: #e5e7eb;
+    }
+
+    .workspace-body {
+      flex: 1;
+      padding: 10px 14px 14px;
+      overflow-y: auto;
+    }
+
+    .form-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .form-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .pill-badge {
+      font-size: 0.7rem;
+      padding: 0.05rem 0.5rem;
+      border-radius: 999px;
+      background: #e5e7eb;
+      color: #4b5563;
+    }
+
+    .form-description {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 0.8rem;
+    }
+
+    form {
+      background: #f9fafb;
+      border-radius: 14px;
+      padding: 10px 12px 12px;
+      border: 1px solid #e5e7eb;
+      font-size: 0.85rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .form-field {
+      flex: 1 1 180px;
+    }
+
+    textarea.input {
+      resize: vertical;
+    }
+
+    .form-note {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 0.3rem;
+    }
+
+    .btn-secondary {
+      border-radius: 999px;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.8rem;
+      border: 1px solid #d1d5db;
+      background: white;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .btn-secondary:hover {
+      background: #f3f4f6;
+    }
+
+    @media (max-width: 800px) {
+      body {
+        align-items: stretch;
+        padding: 0.8rem;
+      }
+      #app {
+        border-radius: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- LOGIN SCREEN -->
+  <div id="login-screen">
+    <div class="login-title">Payments Ops Console</div>
+    <div class="login-subtitle">
+      Single URL for all payments operations use cases.
+    </div>
+
+    <form id="login-form">
+      <div style="margin-bottom: 0.8rem;">
+        <label for="username">User ID</label>
+        <input id="username" class="input" name="username" autocomplete="off" />
+      </div>
+      <div style="margin-bottom: 0.4rem;">
+        <label for="password">Password</label>
+        <input id="password" class="input" type="password" name="password" />
+      </div>
+      <button type="submit" class="btn">Sign in</button>
+      <div id="login-error" class="error-msg hidden">
+        Invalid credentials. Use one of the demo users below.
+      </div>
+    </form>
+
+    <div class="demo-creds">
+      <div><strong>Demo users:</strong></div>
+      <div>Inquiry only → <code>inquiryUser / password1</code></div>
+      <div>Ops (full access) → <code>opsAdmin / password2</code></div>
+    </div>
+
+    <div class="login-footer">
+      Front-end only prototype. No real authentication or backend calls.
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="app" class="hidden">
+    <header class="app-header">
+      <div class="app-header-left">
+        <div class="app-title">Payments Ops Console</div>
+        <div class="app-subtitle">Centralized UI for all operations use cases</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div class="user-pill">
+          <span id="user-name-display"></span>
+          <span id="user-role-display" class="user-role"></span>
+        </div>
+        <button id="logout-btn" class="logout-btn">Logout</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- DASHBOARD VIEW -->
+      <section id="dashboard-view">
+        <div class="dashboard-header">
+          <div class="dashboard-title">Dashboard</div>
+          <button id="go-workspace-from-dashboard" class="btn-secondary">
+            Go to Workspace
+          </button>
+        </div>
+        <div style="font-size:0.85rem;color:#6b7280;">
+          Click a tile to open the use case in the workspace as a new tab.
+        </div>
+        <div id="tiles-grid" class="tiles-grid"></div>
+      </section>
+
+      <!-- WORKSPACE VIEW (TABS + FORMS) -->
+      <section id="workspace-view" class="hidden">
+        <div class="workspace-top-bar">
+          <div class="workspace-title">Workspace</div>
+          <button id="back-to-dashboard-btn" class="btn-secondary">
+            Back to Dashboard
+          </button>
+        </div>
+        <div id="tabs-bar" class="tabs-bar"></div>
+        <div class="workspace-body">
+          <div class="form-header">
+            <div class="form-title" id="current-form-title">No tab selected</div>
+            <span class="pill-badge" id="current-form-badge">–</span>
+          </div>
+          <div class="form-description" id="current-form-description">
+            Open a tile from the dashboard to create a new tab, or click an existing tab above.
+          </div>
+
+          <!-- Forms (one visible at a time) -->
+
+          <!-- Payment Search -->
+          <form id="form-payment-search" class="hidden">
+            <div class="form-row">
+              <div class="form-field">
+                <label>Debtor Account / Name</label>
+                <input class="input" name="debtor" placeholder="Optional" />
+              </div>
+              <div class="form-field">
+                <label>Creditor Account / Name</label>
+                <input class="input" name="creditor" placeholder="Optional" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Payment Reference</label>
+                <input class="input" name="reference" placeholder="End-to-end ID / UTR" />
+              </div>
+              <div class="form-field">
+                <label>Date Range</label>
+                <input class="input" name="dateRange" placeholder="YYYY-MM-DD to YYYY-MM-DD" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Amount (From)</label>
+                <input class="input" name="amountFrom" type="number" step="0.01" />
+              </div>
+              <div class="form-field">
+                <label>Amount (To)</label>
+                <input class="input" name="amountTo" type="number" step="0.01" />
+              </div>
+            </div>
+            <button type="submit" class="btn">Search</button>
+            <div class="form-note">
+              Prototype: on submit, the form is just logged to console.
+            </div>
+          </form>
+
+          <!-- Payment Status Inquiry -->
+          <form id="form-status-inquiry" class="hidden">
+            <div class="form-row">
+              <div class="form-field">
+                <label>Payment Identifier</label>
+                <input class="input" name="paymentId" placeholder="UTR / internal payment ID" required />
+              </div>
+              <div class="form-field">
+                <label>Channel</label>
+                <select class="input" name="channel">
+                  <option value="">Any</option>
+                  <option>SWIFT</option>
+                  <option>SEPA</option>
+                  <option>Faster Payments</option>
+                  <option>RTGS</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn">Get Status</button>
+            <div class="form-note">
+              Typically used to show status timeline and SLA information.
+            </div>
+          </form>
+
+          <!-- POM Config -->
+          <form id="form-pom-config" class="hidden">
+            <div class="form-row">
+              <div class="form-field">
+                <label>Rule Code</label>
+                <input class="input" name="ruleCode" placeholder="e.g. AML_RISK_COUNTRY" required />
+              </div>
+              <div class="form-field">
+                <label>Destination Country</label>
+                <input class="input" name="country" placeholder="ISO Country (e.g. GB, DE, IN)" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Action</label>
+                <select class="input" name="action">
+                  <option>ALLOW</option>
+                  <option>MANUAL_REVIEW</option>
+                  <option>BLOCK</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Effective From</label>
+                <input class="input" name="effectiveFrom" type="date" />
+              </div>
+            </div>
+            <div>
+              <label>Comments</label>
+              <textarea class="input" name="comments" rows="3"
+                placeholder="Explain why this rule is being changed."></textarea>
+            </div>
+            <button type="submit" class="btn">Save Configuration</button>
+            <div class="form-note">
+              In real life: would create change request and send to rules engine after approvals.
+            </div>
+          </form>
+
+          <!-- Payment Cancellation -->
+          <form id="form-payment-cancellation" class="hidden">
+            <div class="form-row">
+              <div class="form-field">
+                <label>Payment Identifier</label>
+                <input class="input" name="paymentId" placeholder="Internal payment ID / instruction ID" required />
+              </div>
+              <div class="form-field">
+                <label>Reason Code</label>
+                <select class="input" name="reason">
+                  <option>CUST_REQUEST</option>
+                  <option>DUPLICATE</option>
+                  <option>COMPLIANCE</option>
+                  <option>TECHNICAL_ERROR</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label>Additional Details</label>
+              <textarea class="input" name="details" rows="3"
+                placeholder="Capture customer instruction, time, and any supporting details."></textarea>
+            </div>
+            <button type="submit" class="btn">Submit Cancellation</button>
+            <div class="form-note">
+              Real flow: scheme eligibility checks and cancellation message to payment hub.
+            </div>
+          </form>
+
+          <!-- Payment Return -->
+          <form id="form-payment-return" class="hidden">
+            <div class="form-row">
+              <div class="form-field">
+                <label>Original Payment ID / UTR</label>
+                <input class="input" name="originalId" required />
+              </div>
+              <div class="form-field">
+                <label>Return Reason</label>
+                <select class="input" name="returnReason">
+                  <option>ACCOUNT_CLOSED</option>
+                  <option>ACCOUNT_INVALID</option>
+                  <option>AML_SANCTIONS</option>
+                  <option>OTHER_BANK_REQUEST</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Return Amount</label>
+                <input class="input" type="number" step="0.01" name="amount" />
+              </div>
+              <div class="form-field">
+                <label>Charges Applied</label>
+                <input class="input" type="number" step="0.01" name="charges" />
+              </div>
+            </div>
+            <div>
+              <label>Comments to Counterparty</label>
+              <textarea class="input" name="cpComments" rows="3"
+                placeholder="Free text message to sending bank (if supported by scheme)."></textarea>
+            </div>
+            <button type="submit" class="btn">Submit Return</button>
+            <div class="form-note">
+              Real flow: generate structured return & accounting via payment hub / scheme.
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Simple in-browser "auth" model for prototype
+    const USERS = {
+      inquiryUser: {
+        password: "password1",
+        role: "INQUIRY",
+        allowedTiles: ["payment-search", "status-inquiry"],
+      },
+      opsAdmin: {
+        password: "password2",
+        role: "OPS_FULL",
+        allowedTiles: [
+          "payment-search",
+          "status-inquiry",
+          "pom-config",
+          "payment-cancellation",
+          "payment-return",
+        ],
+      },
+    };
+
+    const TILE_DEFINITIONS = {
+      "payment-search": {
+        name: "Payment Search",
+        tag: "Inquiry",
+        description: "Search payments by reference, counterparty, amount, or date range.",
+        formId: "form-payment-search",
+        badge: "Inquiry",
+      },
+      "status-inquiry": {
+        name: "Payment Status Inquiry",
+        tag: "Inquiry",
+        description: "Get the status timeline for a specific payment.",
+        formId: "form-status-inquiry",
+        badge: "Inquiry",
+      },
+      "pom-config": {
+        name: "POM Config",
+        tag: "Config",
+        description: "Maintain configuration rules for payment orchestration/monitoring.",
+        formId: "form-pom-config",
+        badge: "Config",
+      },
+      "payment-cancellation": {
+        name: "Payment Cancellation",
+        tag: "Action",
+        description: "Submit cancellation requests for eligible payments.",
+        formId: "form-payment-cancellation",
+        badge: "Action",
+      },
+      "payment-return": {
+        name: "Payment Return",
+        tag: "Action",
+        description: "Initiate returns for received payments, with charges and reasons.",
+        formId: "form-payment-return",
+        badge: "Action",
+      },
+    };
+
+    const loginScreen = document.getElementById("login-screen");
+    const loginForm = document.getElementById("login-form");
+    const loginError = document.getElementById("login-error");
+    const app = document.getElementById("app");
+
+    const tilesGrid = document.getElementById("tiles-grid");
+    const userNameDisplay = document.getElementById("user-name-display");
+    const userRoleDisplay = document.getElementById("user-role-display");
+    const logoutBtn = document.getElementById("logout-btn");
+
+    const dashboardView = document.getElementById("dashboard-view");
+    const workspaceView = document.getElementById("workspace-view");
+    const backToDashboardBtn = document.getElementById("back-to-dashboard-btn");
+    const goWorkspaceFromDashboardBtn = document.getElementById("go-workspace-from-dashboard");
+
+    const tabsBar = document.getElementById("tabs-bar");
+    const currentFormTitle = document.getElementById("current-form-title");
+    const currentFormBadge = document.getElementById("current-form-badge");
+    const currentFormDescription = document.getElementById("current-form-description");
+
+    let currentUser = null;
+    let openTabs = []; // array of tileKeys
+    let activeTileKey = null;
+
+    function showAppForUser(username, userConfig) {
+      currentUser = { username, ...userConfig };
+
+      userNameDisplay.textContent = username;
+      userRoleDisplay.textContent =
+        userConfig.role === "INQUIRY" ? "Inquiry Only" : "Ops (Full Access)";
+
+      // Build tiles for this user
+      tilesGrid.innerHTML = "";
+      currentUser.allowedTiles.forEach((tileKey) => {
+        const def = TILE_DEFINITIONS[tileKey];
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "tile";
+        tile.dataset.tileKey = tileKey;
+        tile.innerHTML = `
+          <div class="tile-name">${def.name}</div>
+          <div class="tile-tag">${def.tag}</div>
+        `;
+        tile.addEventListener("click", () => {
+          openTab(tileKey);
+          switchToWorkspace();
+        });
+        tilesGrid.appendChild(tile);
+      });
+
+      // reset workspace state
+      openTabs = [];
+      activeTileKey = null;
+      tabsBar.innerHTML = "";
+      hideAllForms();
+      currentFormTitle.textContent = "No tab selected";
+      currentFormBadge.textContent = "–";
+      currentFormDescription.textContent =
+        "Open a tile from the dashboard to create a new tab, or click an existing tab above.";
+
+      loginScreen.classList.add("hidden");
+      app.classList.remove("hidden");
+      dashboardView.classList.remove("hidden");
+      workspaceView.classList.add("hidden");
+    }
+
+    function hideAllForms() {
+      Object.values(TILE_DEFINITIONS).forEach((def) => {
+        const form = document.getElementById(def.formId);
+        if (form) form.classList.add("hidden");
+      });
+    }
+
+    function renderTabs() {
+      tabsBar.innerHTML = "";
+
+      openTabs.forEach((tileKey) => {
+        const def = TILE_DEFINITIONS[tileKey];
+        const tab = document.createElement("div");
+        tab.className = "tab" + (tileKey === activeTileKey ? " active" : "");
+        tab.dataset.tileKey = tileKey;
+
+        const labelSpan = document.createElement("span");
+        labelSpan.textContent = def.name;
+
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "tab-close";
+        closeBtn.innerHTML = "&times;";
+        closeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeTab(tileKey);
+        });
+
+        tab.appendChild(labelSpan);
+        tab.appendChild(closeBtn);
+        tab.addEventListener("click", () => {
+          activateTab(tileKey);
+        });
+
+        tabsBar.appendChild(tab);
+      });
+    }
+
+    function openTab(tileKey) {
+      if (!TILE_DEFINITIONS[tileKey]) return;
+      if (!openTabs.includes(tileKey)) {
+        openTabs.push(tileKey);
+      }
+      activateTab(tileKey);
+    }
+
+    function activateTab(tileKey) {
+      if (!TILE_DEFINITIONS[tileKey]) return;
+      activeTileKey = tileKey;
+
+      // update tab bar
+      renderTabs();
+
+      // show relevant form
+      hideAllForms();
+      const def = TILE_DEFINITIONS[tileKey];
+      const form = document.getElementById(def.formId);
+      if (form) form.classList.remove("hidden");
+
+      currentFormTitle.textContent = def.name;
+      currentFormBadge.textContent = def.badge;
+      currentFormDescription.textContent = def.description;
+    }
+
+    function closeTab(tileKey) {
+      const index = openTabs.indexOf(tileKey);
+      if (index !== -1) {
+        openTabs.splice(index, 1);
+      }
+
+      // if closed tab was active, pick another
+      if (tileKey === activeTileKey) {
+        if (openTabs.length > 0) {
+          activeTileKey = openTabs[openTabs.length - 1];
+          activateTab(activeTileKey);
+        } else {
+          activeTileKey = null;
+          hideAllForms();
+          renderTabs();
+          currentFormTitle.textContent = "No tab selected";
+          currentFormBadge.textContent = "–";
+          currentFormDescription.textContent =
+            "Open a tile from the dashboard to create a new tab, or click an existing tab above.";
+        }
+      } else {
+        renderTabs();
+      }
+    }
+
+    function switchToWorkspace() {
+      dashboardView.classList.add("hidden");
+      workspaceView.classList.remove("hidden");
+    }
+
+    function switchToDashboard() {
+      dashboardView.classList.remove("hidden");
+      workspaceView.classList.add("hidden");
+    }
+
+    // Attach login handler
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const username = (document.getElementById("username").value || "").trim();
+      const password = document.getElementById("password").value;
+
+      const userConfig = USERS[username];
+      if (userConfig && userConfig.password === password) {
+        loginError.classList.add("hidden");
+        showAppForUser(username, userConfig);
+      } else {
+        loginError.classList.remove("hidden");
+      }
+    });
+
+    // Logout
+    logoutBtn.addEventListener("click", () => {
+      currentUser = null;
+      activeTileKey = null;
+      openTabs = [];
+      app.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
+      loginForm.reset();
+      loginError.classList.add("hidden");
+    });
+
+    // Navigation buttons
+    backToDashboardBtn.addEventListener("click", () => {
+      switchToDashboard();
+    });
+
+    goWorkspaceFromDashboardBtn.addEventListener("click", () => {
+      switchToWorkspace();
+    });
+
+    // Simple handler for all forms: just log & show alert
+    function attachSubmitLogging(formId, label) {
+      const form = document.getElementById(formId);
+      if (!form) return;
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const data = new FormData(form);
+        const obj = {};
+        for (const [key, val] of data.entries()) {
+          obj[key] = val;
+        }
+        console.log(`[${label}] Submitted:`, obj);
+        alert(`${label} submitted (check console for payload).`);
+      });
+    }
+
+    attachSubmitLogging("form-payment-search", "Payment Search");
+    attachSubmitLogging("form-status-inquiry", "Payment Status Inquiry");
+    attachSubmitLogging("form-pom-config", "POM Config");
+    attachSubmitLogging("form-payment-cancellation", "Payment Cancellation");
+    attachSubmitLogging("form-payment-return", "Payment Return");
+  </script>
+</body>
+</html>
