@@ -1,0 +1,34 @@
+Here is a clean reusable prompt summarizing everything we have discussed so far.
+You can copy-paste this anytime to regenerate the same design direction, landing page, tiles, and behavior.
+
+⸻
+
+✅ Reusable Prompt for Later Use
+
+**“I am designing a centralized payments UI called Global Payments Console (GPC). It will be a single unified console for payment operations and payment administration. The platform should support role-based tiles with SSO login. Typical users are Payment Ops and Payment Admin teams. Core functions include:
+	•	Payment search & inquiry (InstrId / EndToEndId / MsgId / ISO20022 attributes)
+	•	Payment cancellation (maker–checker), payment return (maker–checker)
+	•	Bulk cancellation & bulk return
+	•	Validation rules engine / POM rules editor (ISO20022-aware conditions)
+	•	Reference data management (currency lists, BIC, static data)
+	•	HV engine configuration
+	•	Instant payments configuration
+	•	SEPA engine configuration
+	•	CREST operations (separate tile)
+	•	Partner bank configuration (separate tile)
+	•	Role-based tiles
+	•	SSO auto-login into console
+	•	No compliance or audit section needed
+
+I want:
+	1.	A clean landing page for GPC explaining key capabilities and use cases.
+	2.	A “Launch GPC” button that simulates SSO and opens the console.
+	3.	A console layout with sidebar + top bar + tile grid (as per earlier prototype).
+	4.	Tiles should open modal UIs for each function with assumed ISO fields.
+	5.	Remove audit/compliance references and remove logo section.
+
+Generate a single-page HTML/CSS application implementing this behavior (landing + console + tiles + modal screens). Keep the styling modern and consistent with the earlier prototypes.”**
+
+⸻
+
+If you want, I can also produce a shorter version, a version for management pitch, or a version for Jira/Epics documentation.
