@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Country Validation Configuration</title>
+
+<style>
+/* ===== minimal original-like styling ===== */
+body { font-family: system-ui; background:#f4f5f7; padding:20px; }
+.card { background:#fff; border-radius:12px; padding:16px; border:1px solid #e5e7eb; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th,td { padding:10px; border-bottom:1px solid #e5e7eb; text-align:left; }
+th { background:#f9fafb; font-size:11px; color:#6b7280; text-transform:uppercase; }
+.small-btn { font-size:11px; padding:4px 10px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; }
+.status-pill { font-size:11px; padding:3px 8px; border-radius:999px; background:#fee2e2; color:#b91c1c; }
+.toggle input { accent-color:#2563eb; }
+
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; justify-content:center; align-items:center; }
+.modal { background:#fff; border-radius:12px; width:520px; padding:16px; }
+.modal-title { font-weight:600; }
+.field-label { font-size:11px; margin-top:8px; }
+.modal-select { width:100%; padding:6px; margin-top:2px; }
+.code { background:#0f172a; color:#e5e7eb; padding:8px; border-radius:6px; font-size:11px; max-height:180px; overflow:auto; }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h3>Complex Rules</h3>
+  <button class="small-btn" onclick="addRule()">＋ Add New Rule Code</button>
+
+  <table style="margin-top:10px">
+    <thead>
+      <tr>
+        <th>Rule Code</th>
+        <th>Rule Name</th>
+        <th>Rule Type</th>
+        <th>Enabled</th>
+        <th>Configure</th>
+      </tr>
+    </thead>
+    <tbody id="rulesBody"></tbody>
+  </table>
+</div>
+
+<!-- ===== Build JSON Modal ===== -->
+<div class="modal-backdrop" id="ruleModal">
+  <div class="modal">
+    <div class="modal-title">Configure Rule</div>
+
+    <div class="field-label">Rule Type</div>
+    <select class="modal-select" id="ruleType" onchange="renderParams()">
+      <option value="">Select</option>
+      <option value="LOOKUP">Lookup</option>
+      <option value="ALLOWED_VALUES">Allowed Values</option>
+      <option value="CONDITIONAL_PRESENCE">Conditional Presence</option>
+      <option value="FORMAT">Format</option>
+      <option value="AMOUNT_BAND">Min / Max Amount</option>
+    </select>
+
+    <div id="params"></div>
+
+    <div class="field-label">Generated JSON</div>
+    <pre id="jsonPreview" class="code">{}</pre>
+
+    <div style="margin-top:10px; text-align:right">
+      <button class="small-btn" onclick="saveRule()">Save Rule</button>
+      <button class="small-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== sample fields ===== */
+const FIELDS = [
+  "dbtr.ctry","cdtr.ctry","purp.cd","amt.ccy","amt.value","cdtrAgt.bic"
+];
+
+let activeRow = null;
+
+/* ===== add rule ===== */
+function addRule() {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input placeholder="RULE_CODE"/></td>
+    <td class="muted">Draft rule</td>
+    <td class="muted">—</td>
+    <td><input type="checkbox" checked></td>
+    <td><button class="small-btn" onclick="openModal(this)">Build JSON</button></td>
+  `;
+  document.getElementById("rulesBody").appendChild(tr);
+}
+
+/* ===== modal ===== */
+function openModal(btn) {
+  activeRow = btn.closest("tr");
+  ruleType.value = activeRow.dataset.ruleType || "";
+  params.innerHTML = "";
+  jsonPreview.textContent = activeRow.dataset.ruleJson || "{}";
+  document.getElementById("ruleModal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("ruleModal").style.display = "none";
+}
+
+/* ===== dynamic params ===== */
+function renderParams() {
+  const t = ruleType.value;
+  if (!t) return;
+
+  if (t === "LOOKUP") {
+    params.innerHTML = `
+      <div class="field-label">Field</div>
+      <select class="modal-select" id="field">${FIELDS.map(f=>`<option>${f}</option>`).join("")}</select>
+      <div class="field-label">Reference</div>
+      <select class="modal-select" id="ref">
+        <option>IN_PURPOSE_CODE_REF</option>
+        <option>SWIFT_BIC_REF</option>
+      </select>
+    `;
+  }
+
+  if (t === "ALLOWED_VALUES") {
+    params.innerHTML = `
+      <div class="field-label">Field</div>
+      <select class="modal-select" id="field">${FIELDS.map(f=>`<option>${f}</option>`).join("")}</select>
+      <div class="field-label">Allowed Values</div>
+      <input class="modal-select" id="vals" placeholder="OUR,SHA"/>
+    `;
+  }
+
+  if (t === "CONDITIONAL_PRESENCE") {
+    params.innerHTML = `
+      <div class="field-label">Condition Field</div>
+      <select class="modal-select" id="cfield">${FIELDS.map(f=>`<option>${f}</option>`).join("")}</select>
+      <div class="field-label">Operator</div>
+      <select class="modal-select" id="op"><option>EQ</option><option>NE</option><option>IN</option></select>
+      <div class="field-label">Value</div>
+      <input class="modal-select" id="val"/>
+      <div class="field-label">Required Field</div>
+      <select class="modal-select" id="req">${FIELDS.map(f=>`<option>${f}</option>`).join("")}</select>
+    `;
+  }
+
+  if (t === "FORMAT") {
+    params.innerHTML = `
+      <div class="field-label">Field</div>
+      <select class="modal-select" id="field">${FIELDS.map(f=>`<option>${f}</option>`).join("")}</select>
+      <div class="field-label">Pattern</div>
+      <input class="modal-select" id="pattern" placeholder="IBAN"/>
+    `;
+  }
+
+  if (t === "AMOUNT_BAND") {
+    params.innerHTML = `
+      <div class="field-label">Min</div><input class="modal-select" id="min"/>
+      <div class="field-label">Max</div><input class="modal-select" id="max"/>
+      <div class="field-label">Currency</div><input class="modal-select" id="ccy" value="INR"/>
+    `;
+  }
+}
+
+/* ===== save rule (THIS WAS MISSING EARLIER) ===== */
+function saveRule() {
+  const type = ruleType.value;
+  const ruleCode = activeRow.querySelector("input").value;
+
+  const json = {
+    ruleCode,
+    ruleType: type,
+    enabled: true,
+    parameters: {}
+  };
+
+  params.querySelectorAll("input,select").forEach(e => {
+    json.parameters[e.id] = e.value;
+  });
+
+  /* persist on row */
+  activeRow.dataset.ruleJson = JSON.stringify(json);
+  activeRow.dataset.ruleType = type;
+
+  /* update visible row */
+  activeRow.children[1].textContent = type.replace("_"," ").toLowerCase();
+  activeRow.children[2].textContent = type;
+
+  jsonPreview.textContent = JSON.stringify(json, null, 2);
+  closeModal();
+}
+</script>
+
+</body>
+</html>

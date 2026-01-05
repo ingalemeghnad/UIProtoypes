@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>International Payment – Country Validations Config</title>
+
+<style>
+    :root {
+      --bg: #f4f5f7;
+      --card-bg: #ffffff;
+      --border: #d5d7de;
+      --border-soft: #e1e3ea;
+      --primary: #2563eb;
+      --primary-soft: #e0ebff;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --text-soft: #9ca3af;
+      --success: #16a34a;
+      --error: #dc2626;
+      --radius-lg: 12px;
+      --radius-md: 8px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.06);
+      --padding-page: 24px;
+      --transition-fast: 0.15s ease-out;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: var(--padding-page);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #e0f2fe, #f4f5f7 40%);
+      color: var(--text-main);
+    }
+
+    .page-wrapper { max-width: 1200px; margin: 0 auto; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .page-header-title { display: flex; flex-direction: column; gap: 4px; }
+
+    .page-header-title h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .page-header-title p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: rgba(37, 99, 235, 0.06);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      padding: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* LEFT: country list */
+
+    .country-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .country-actions { display: flex; gap: 6px; }
+
+    .btn-ghost {
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-soft);
+      background: #f9fafb;
+      font-size: 11px;
+      padding: 4px 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-muted);
+    }
+
+    .btn-ghost:hover { background: #f3f4f6; }
+
+    .country-list {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-soft);
+      background: #f9fafb;
+      overflow: hidden;
+      max-height: 360px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .country-item {
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background var(--transition-fast);
+    }
+
+    .country-item:last-child { border-bottom: none; }
+
+    .country-item:hover { background: #eef2ff; }
+
+    .country-item.is-active {
+      background: #e0ebff;
+      border-left: 3px solid var(--primary);
+      padding-left: 7px;
+    }
+
+    .country-meta { display: flex; flex-direction: column; gap: 2px; }
+
+    .country-name { font-weight: 500; }
+
+    .country-code { font-size: 11px; color: var(--text-soft); }
+
+    .badge-scheme {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: var(--radius-pill);
+      background: #e5e7eb;
+      color: #4b5563;
+      white-space: nowrap;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    /* RIGHT: tabs + tables */
+
+    .tabs {
+      display: inline-flex;
+      background: #f3f4f6;
+      border-radius: var(--radius-pill);
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .tab {
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .tab span.count {
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.04);
+    }
+
+    .tab.is-active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+    }
+
+    .tab.is-active span.count {
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: var(--radius-pill);
+      background: #f9fafb;
+      color: var(--text-soft);
+    }
+
+    .primary-btn {
+      border: none;
+      border-radius: var(--radius-pill);
+      padding: 6px 12px;
+      font-size: 12px;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+    }
+
+    .primary-btn[disabled] {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+    }
+
+    .primary-btn:hover:not([disabled]) {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+    }
+
+    .secondary-btn {
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      font-size: 12px;
+      padding: 6px 10px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .secondary-btn:hover { background: #f9fafb; }
+
+    /* Sub-toolbar */
+
+    .sub-toolbar {
+      display: flex;
+      justify-content: flex-start;
+      gap: 8px;
+      margin: 6px 2px 4px;
+    }
+
+    .small-btn {
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .small-btn[disabled] { opacity: 0.5; cursor: default; }
+    .small-btn:hover:not([disabled]) { background: #f3f4f6; }
+
+    /* Banner */
+
+    .banner {
+      margin-top: 4px;
+      margin-bottom: 8px;
+      padding: 6px 10px;
+      border-radius: var(--radius-md);
+      background: #fffbeb;
+      border: 1px solid #facc15;
+      font-size: 11px;
+      color: #854d0e;
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .banner span strong { font-weight: 600; }
+
+    /* Tables */
+
+    .table-wrapper {
+      margin-top: 6px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-soft);
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead { background: #f9fafb; }
+
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #edf0f4;
+    }
+
+    th {
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    tbody tr:hover { background: #f9fafb; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: #eef2ff;
+      color: #4338ca;
+      font-size: 11px;
+    }
+
+    .tag-soft { background: #f3f4f6; color: #4b5563; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+    }
+
+    .status-pill.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--error);
+    }
+
+    .status-pill.warning {
+      background: rgba(234, 179, 8, 0.12);
+      color: #ca8a04;
+    }
+
+    .status-pill.info {
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+    }
+
+    .muted { color: var(--text-muted); font-size: 11px; }
+
+    /* Toggle */
+
+    .toggle {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .toggle input { display: none; }
+
+    .toggle-track {
+      width: 30px;
+      height: 16px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      position: relative;
+      transition: background var(--transition-fast);
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.35);
+      transition: transform var(--transition-fast);
+    }
+
+    .toggle input:checked + .toggle-track { background: var(--primary); }
+
+    .toggle input:checked + .toggle-track .toggle-thumb {
+      transform: translateX(14px);
+    }
+
+    .toggle input:checked ~ .toggle-label { color: var(--primary); }
+
+    .helper-footer {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 8px;
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 6px;
+    }
+
+    .helper-footer span strong { font-weight: 600; color: var(--text-muted); }
+
+    .toast {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #022c22;
+      color: #ecfdf5;
+      padding: 8px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+    }
+
+    .toast.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    /* Modal */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .modal {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+      padding: 16px 18px 14px;
+      min-width: 320px;
+      max-width: 420px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      border: none;
+      background: transparent;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--text-soft);
+    }
+
+    .modal-body {
+      margin-bottom: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .field-label {
+      font-size: 11px;
+      margin-bottom: 4px;
+      color: var(--text-soft);
+    }
+
+    .modal-select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      font-size: 12px;
+      background: #f9fafb;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .btn-sm {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .btn-sm-primary {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-sm-primary:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+
+    @media (max-width: 900px) {
+      body { padding: 12px; }
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="page-wrapper">
+    <header class="page-header">
+      <div class="page-header-title">
+        <h1>Country Validation Configuration</h1>
+        <p>
+          International payments only – mandatory attributes = presence check only.
+          All other validations are configured as complex rules.
+        </p>
+      </div>
+      <div class="badge-pill">
+        Intl Payments · Validations
+        <span style="font-size: 16px;">🌐</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- LEFT: Country list / CRUD -->
+      <section class="card">
+        <div class="country-header">
+          <div>
+            <div class="card-title">Countries</div>
+            <div class="card-subtitle">Add, modify, or delete country-specific configs.</div>
+          </div>
+          <div class="country-actions">
+            <button class="btn-ghost" id="addCountryBtn">＋ Add</button>
+            <button class="btn-ghost" id="deleteCountryBtn">🗑 Delete</button>
+          </div>
+        </div>
+
+        <div class="country-list" id="countryList">
+          <div class="country-item is-active" data-code="IN">
+            <div class="country-meta">
+              <span class="country-name">India</span>
+              <span class="country-code">IN · INR</span>
+            </div>
+            <span class="badge-scheme">SWIFT, RTGS-XB</span>
+          </div>
+          <div class="country-item" data-code="GB">
+            <div class="country-meta">
+              <span class="country-name">United Kingdom</span>
+              <span class="country-code">GB · GBP</span>
+            </div>
+            <span class="badge-scheme">SWIFT, CHAPS-XB</span>
+          </div>
+          <div class="country-item" data-code="US">
+            <div class="country-meta">
+              <span class="country-name">United States</span>
+              <span class="country-code">US · USD</span>
+            </div>
+            <span class="badge-scheme">SWIFT, FEDWIRE-XB</span>
+          </div>
+          <div class="country-item" data-code="AE">
+            <div class="country-meta">
+              <span class="country-name">United Arab Emirates</span>
+              <span class="country-code">AE · AED</span>
+            </div>
+            <span class="badge-scheme">SWIFT, LOCAL-XB</span>
+          </div>
+        </div>
+
+        <div class="hint">
+          Mandatory attributes: only check that the field is present.
+          Conditional presence / format / lookups are handled via complex rules.
+        </div>
+      </section>
+
+      <!-- RIGHT: per-country config -->
+      <section class="card">
+        <div class="card-header">
+          <div class="tabs" id="tabs">
+            <button class="tab is-active" data-target="mandatory">
+              Mandatory Attributes
+              <span class="count" id="mandatoryCount">3</span>
+            </button>
+            <button class="tab" data-target="complex">
+              Complex Rules
+              <span class="count" id="complexCount">3</span>
+            </button>
+          </div>
+          <div class="toolbar">
+            <div class="chip" id="scopeChip">Scope: IN · International</div>
+            <button class="secondary-btn" id="discardBtn" disabled>Discard changes</button>
+            <button class="primary-btn" id="saveBtn" disabled>💾 Save country config</button>
+          </div>
+        </div>
+
+        <div class="sub-toolbar">
+          <button class="small-btn" id="addAttributeBtn">＋ Add attribute</button>
+          <button class="small-btn" id="addRuleBtn" disabled>＋ Add rule</button>
+        </div>
+
+        <div class="banner" id="dirtyBanner">
+          <span>
+            <strong>Unsaved changes</strong> for <span id="dirtyCountryCode">IN</span>. Save before deploying to production.
+          </span>
+        </div>
+
+        <!-- MANDATORY ATTRIBUTES TABLE (presence-only) -->
+        <div class="table-wrapper" id="mandatoryTable">
+          <table>
+            <thead>
+              <tr>
+                <th>Attribute</th>
+                <th>Level</th>
+                <th>Mandatory</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-attr-id="DBTR_ACCT">
+                <td>
+                  Debtor Account
+                  <div class="muted">Field: <code>dbtrAcct.iban</code></div>
+                </td>
+                <td><span class="tag">Header</span></td>
+                <td>
+                  <label class="toggle">
+                    <input type="checkbox" checked />
+                    <span class="toggle-track">
+                      <span class="toggle-thumb"></span>
+                    </span>
+                    <span class="toggle-label">Required</span>
+                  </label>
+                </td>
+                <td><span class="tag-soft">Global</span></td>
+              </tr>
+              <tr data-attr-id="PURPOSE_CODE">
+                <td>
+                  Purpose Code
+                  <div class="muted">Field: <code>pmtTpInf.purp.cd</code></div>
+                </td>
+                <td><span class="tag">Header</span></td>
+                <td>
+                  <label class="toggle">
+                    <input type="checkbox" checked />
+                    <span class="toggle-track">
+                      <span class="toggle-thumb"></span>
+                    </span>
+                    <span class="toggle-label">Required</span>
+                  </label>
+                </td>
+                <td><span class="tag-soft">Local override</span></td>
+              </tr>
+              <tr data-attr-id="ULTMT_CDTR_NAME">
+                <td>
+                  Ultimate Beneficiary Name
+                  <div class="muted">Field: <code>ultmtCdtr.nm</code></div>
+                </td>
+                <td><span class="tag tag-soft">Header</span></td>
+                <td>
+                  <label class="toggle">
+                    <input type="checkbox" />
+                    <span class="toggle-track">
+                      <span class="toggle-thumb"></span>
+                    </span>
+                    <span class="toggle-label">Optional</span>
+                  </label>
+                </td>
+                <td><span class="tag-soft">Country only</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- COMPLEX RULES TABLE (everything beyond presence) -->
+        <div class="table-wrapper" id="complexTable" style="display:none;">
+          <table>
+            <thead>
+              <tr>
+                <th>Rule Code</th>
+                <th>Rule Name</th>
+                <th>Severity</th>
+                <th>Scope</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-rule-code="IN_PURPOSE_LOOKUP">
+                <td><code>IN_PURPOSE_LOOKUP</code></td>
+                <td>
+                  Validate Purpose Code Against Ref Data
+                  <div class="muted">Lookup against IN specific purpose code reference table.</div>
+                </td>
+                <td>
+                  <span class="status-pill error">
+                    ● Error
+                  </span>
+                </td>
+                <td>
+                  <div>All cross-border credits</div>
+                  <div class="muted">Applies: SWIFT, RTGS-XB</div>
+                </td>
+                <td>
+                  <label class="toggle">
+                    <input type="checkbox" checked />
+                    <span class="toggle-track">
+                      <span class="toggle-thumb"></span>
+                    </span>
+                    <span class="toggle-label">Enabled</span>
+                  </label>
+                </td>
+                <td>
+                  12 Nov 2025
+                  <div class="muted">by ops-config-user</div>
+                </td>
+              </tr>
+              <tr data-rule-code="IN_TAX_REPORTING_THRESHOLD">
+                <td><code>IN_TAX_REPORTING_THRESHOLD</code></td>
+                <td>
+                  High Value Tax Reporting Threshold
+                  <div class="muted">Triggers additional reporting when amount exceeds local tax threshold.</div>
+                </td>
+                <td>
+                  <span class="status-pill warning">
+                    ● Warning
+                  </span>
+                </td>
+                <td>
+                  <div>International credits</div>
+                  <div class="muted">Threshold source: TAX_THRESHOLD_CFG</div>
+                </td>
+                <td>
+                  <label class="toggle">
+                    <input type="checkbox" checked />
+                    <span class="toggle-track">
+                      <span class="toggle-thumb"></span>
+                    </span>
+                    <span class="toggle-label">Enabled</span>
+                  </label>
+                </td>
+                <td>
+                  05 Nov 2025
+                  <div class="muted">by sys-admin</div>
+                </td>
+              </tr>
+              <tr data-rule-code="IN_BENE_ADDRESS_REQUIRED">
+                <td><code>IN_BENE_ADDRESS_REQUIRED</code></td>
+                <td>
+                  Beneficiary Address for Cross-Border
+                  <div class="muted">Enforce full address for non-resident beneficiaries.</div>
+                </td>
+                <td>
+                  <span class="status-pill error">
+                    ● Error
+                  </span>
+                </td>
+                <td>
+                  <div>Cross-border credits only</div>
+                  <div class="muted">Decorator: ADDRESS_COMPLETENESS</div>
+                </td>
+                <td>
+                  <label class="toggle">
+                    <input type="checkbox" />
+                    <span class="toggle-track">
+                      <span class="toggle-thumb"></span>
+                    </span>
+                    <span class="toggle-label">Disabled</span>
+                  </label>
+                </td>
+                <td>
+                  01 Nov 2025
+                  <div class="muted">by country-owner-IN</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="helper-footer">
+          <span>
+            Mandatory attributes: <strong>presence-only check</strong> (field must be non-empty if marked required).
+          </span>
+          <span>
+            Complex rules: <strong>conditions, lookups, formats</strong> and other logic live here.
+          </span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">Saved country config.</div>
+
+  <!-- Modals -->
+  <!-- Add Country -->
+  <div class="modal-backdrop" id="countryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Add country configuration</div>
+        <button class="modal-close" data-close="countryModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-label">Country</div>
+        <select class="modal-select" id="countrySelect"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-sm" data-close="countryModal">Cancel</button>
+        <button class="btn-sm btn-sm-primary" id="countryConfirmBtn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Attribute -->
+  <div class="modal-backdrop" id="attributeModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Add mandatory attribute (presence-only)</div>
+        <button class="modal-close" data-close="attributeModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-label">Attribute</div>
+        <select class="modal-select" id="attributeSelect"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-sm" data-close="attributeModal">Cancel</button>
+        <button class="btn-sm btn-sm-primary" id="attributeConfirmBtn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Rule -->
+  <div class="modal-backdrop" id="ruleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Add complex rule</div>
+        <button class="modal-close" data-close="ruleModal">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field-label">Rule</div>
+        <select class="modal-select" id="ruleSelect"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-sm" data-close="ruleModal">Cancel</button>
+        <button class="btn-sm btn-sm-primary" id="ruleConfirmBtn">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*************** CATALOGS ***************/
+    const COUNTRY_OPTIONS = [
+      { code: "IN", name: "India", currency: "INR", schemes: "SWIFT, RTGS-XB" },
+      { code: "GB", name: "United Kingdom", currency: "GBP", schemes: "SWIFT, CHAPS-XB" },
+      { code: "US", name: "United States", currency: "USD", schemes: "SWIFT, FEDWIRE-XB" },
+      { code: "AE", name: "United Arab Emirates", currency: "AED", schemes: "SWIFT, LOCAL-XB" },
+      { code: "SG", name: "Singapore", currency: "SGD", schemes: "SWIFT, FAST-XB" },
+      { code: "HK", name: "Hong Kong", currency: "HKD", schemes: "SWIFT, CHATS-XB" },
+      { code: "AU", name: "Australia", currency: "AUD", schemes: "SWIFT, NPP-XB" },
+      { code: "CA", name: "Canada", currency: "CAD", schemes: "SWIFT, LVTS-XB" },
+      { code: "DE", name: "Germany", currency: "EUR", schemes: "SWIFT, SEPA-XB" },
+      { code: "FR", name: "France", currency: "EUR", schemes: "SWIFT, SEPA-XB" },
+      { code: "NL", name: "Netherlands", currency: "EUR", schemes: "SWIFT, SEPA-XB" },
+      { code: "ES", name: "Spain", currency: "EUR", schemes: "SWIFT, SEPA-XB" },
+      { code: "IT", name: "Italy", currency: "EUR", schemes: "SWIFT, SEPA-XB" },
+      { code: "CH", name: "Switzerland", currency: "CHF", schemes: "SWIFT" },
+      { code: "SE", name: "Sweden", currency: "SEK", schemes: "SWIFT" },
+      { code: "NO", name: "Norway", currency: "NOK", schemes: "SWIFT" },
+      { code: "DK", name: "Denmark", currency: "DKK", schemes: "SWIFT" },
+      { code: "JP", name: "Japan", currency: "JPY", schemes: "SWIFT, ZENGIN-XB" },
+      { code: "CN", name: "China", currency: "CNY", schemes: "SWIFT, CIPS-XB" },
+      { code: "ZA", name: "South Africa", currency: "ZAR", schemes: "SWIFT" }
+    ];
+
+    const ATTRIBUTE_CATALOG = [
+      { id: "DBTR_NAME",       label: "Debtor Name",                  level: "Header", field: "dbtr.nm" },
+      { id: "DBTR_ADDRESS",    label: "Debtor Address",               level: "Header", field: "dbtr.pstlAdr" },
+      { id: "DBTR_COUNTRY",    label: "Debtor Country",               level: "Header", field: "dbtr.ctry" },
+      { id: "DBTR_ACCT",       label: "Debtor Account (IBAN/Acct)",   level: "Header", field: "dbtrAcct.id" },
+      { id: "CDTR_NAME",       label: "Beneficiary Name",             level: "Header", field: "cdtr.nm" },
+      { id: "CDTR_ADDRESS",    label: "Beneficiary Address",          level: "Header", field: "cdtr.pstlAdr" },
+      { id: "CDTR_COUNTRY",    label: "Beneficiary Country",          level: "Header", field: "cdtr.ctry" },
+      { id: "CDTR_ACCT",       label: "Beneficiary Account (IBAN)",   level: "Header", field: "cdtrAcct.id" },
+      { id: "CDTR_AGENT_BIC",  label: "Beneficiary Bank BIC",         level: "Header", field: "cdtrAgt.finInstnId.bic" },
+      { id: "INTM_AGENT_BIC",  label: "Intermediary Bank BIC",        level: "Header", field: "intrmyAgt.finInstnId.bic" },
+      { id: "CURRENCY",        label: "Transaction Currency",         level: "Header", field: "intrBkSttlmAmt.ccy" },
+      { id: "AMOUNT",          label: "Transaction Amount",           level: "Header", field: "intrBkSttlmAmt" },
+      { id: "VAL_DATE",        label: "Value Date",                   level: "Header", field: "intrBkSttlmDt" },
+      { id: "CHARGES_BEARER",  label: "Charges Bearer (OUR/SHA/BEN)", level: "Header", field: "chrgBr" },
+      { id: "FX_DEAL_REF",     label: "FX Deal Reference",            level: "Header", field: "fxDealRef" },
+      { id: "PURPOSE_CODE",    label: "Purpose Code",                 level: "Header", field: "pmtTpInf.purp.cd" },
+      { id: "CATEGORY_PURP",   label: "Category Purpose",             level: "Header", field: "pmtTpInf.ctgyPurp.cd" },
+      { id: "REMIT_INFO",      label: "Remittance Information",       level: "Line",   field: "rmtInf.ustrd" },
+      { id: "REG_REPORTING",   label: "Regulatory Reporting Block",   level: "Header", field: "rgltryRptg" },
+      { id: "TAX_DETAILS",     label: "Tax Details",                  level: "Header", field: "tax" },
+      { id: "DOC_REF_NO",      label: "Document Reference Number",    level: "Header", field: "rgltryRptg.docs.refNb" },
+      { id: "ULTMT_DBTR_NAME", label: "Ultimate Debtor Name",         level: "Header", field: "ultmtDbtr.nm" },
+      { id: "ULTMT_CDTR_NAME", label: "Ultimate Beneficiary Name",    level: "Header", field: "ultmtCdtr.nm" }
+    ];
+
+    const RULE_CATALOG = [
+      {
+        code: "PURPOSE_LOOKUP",
+        name: "Validate Purpose Code Against Country Reference",
+        defaultSeverity: "ERROR",
+        description: "Checks purpose code against country-specific ref data set."
+      },
+      {
+        code: "DOC_REF_REQUIRED",
+        name: "Document Reference Required for Trade Payments",
+        defaultSeverity: "ERROR",
+        description: "Ensures invoice / BL / AWB reference present above threshold."
+      },
+      {
+        code: "DEAL_REF_REQUIRED",
+        name: "FX Deal Reference Required",
+        defaultSeverity: "ERROR",
+        description: "Enforces FX deal ref for cross-currency international payments."
+      },
+      {
+        code: "BENE_ADDRESS_REQUIRED",
+        name: "Beneficiary Address Completeness",
+        defaultSeverity: "ERROR",
+        description: "Validates full address lines and country for non-resident beneficiaries."
+      },
+      {
+        code: "DBTR_KYC_RISK_CHECK",
+        name: "Debtor KYC Risk Rating Check",
+        defaultSeverity: "ERROR",
+        description: "Blocks payment if KYC risk rating exceeds allowed threshold."
+      },
+      {
+        code: "HIGH_VALUE_APPROVAL",
+        name: "High-Value Additional Approval",
+        defaultSeverity: "ERROR",
+        description: "Requires additional approval for payments above country-specific limit."
+      },
+      {
+        code: "TAX_REPORTING_THRESHOLD",
+        name: "Tax Reporting Threshold",
+        defaultSeverity: "WARNING",
+        description: "Flags payments that need reporting to local tax/regulator authority."
+      },
+      {
+        code: "SMALL_AMOUNT_SANITY",
+        name: "Minimum Amount Sanity Check",
+        defaultSeverity: "ERROR",
+        description: "Prevents tiny residual international payments below business threshold."
+      },
+      {
+        code: "SANCTIONS_SCREENING_ENFORCED",
+        name: "Sanction Screening Flag Required",
+        defaultSeverity: "ERROR",
+        description: "Verifies that sanctions screening has been performed and result is attached."
+      },
+      {
+        code: "DPL_COUNTRY_RESTRICTION",
+        name: "Denied Party / Country Restriction",
+        defaultSeverity: "ERROR",
+        description: "Rejects payments where counterparty or country is in restricted list."
+      },
+      {
+        code: "LOCAL_REG_REPORTING_FORMAT",
+        name: "Local Regulatory Reporting Format",
+        defaultSeverity: "ERROR",
+        description: "Validates the structure of regulatory reporting block for that country."
+      },
+      {
+        code: "CHARGES_BEARER_RULE",
+        name: "Charges Bearer Rule",
+        defaultSeverity: "ERROR",
+        description: "Enforces allowed charges bearer options (OUR/SHA/BEN) per country."
+      }
+    ];
+
+    (function () {
+      const tabs = document.querySelectorAll(".tab");
+      const mandatoryTable = document.getElementById("mandatoryTable");
+      const complexTable = document.getElementById("complexTable");
+
+      const countryList = document.getElementById("countryList");
+      const scopeChip = document.getElementById("scopeChip");
+      const dirtyBanner = document.getElementById("dirtyBanner");
+      const dirtyCountryCodeSpan = document.getElementById("dirtyCountryCode");
+      const saveBtn = document.getElementById("saveBtn");
+      const discardBtn = document.getElementById("discardBtn");
+      const toast = document.getElementById("toast");
+      const addCountryBtn = document.getElementById("addCountryBtn");
+      const deleteCountryBtn = document.getElementById("deleteCountryBtn");
+      const addAttributeBtn = document.getElementById("addAttributeBtn");
+      const addRuleBtn = document.getElementById("addRuleBtn");
+      const mandatoryCount = document.getElementById("mandatoryCount");
+      const complexCount = document.getElementById("complexCount");
+
+      // Modals & selects
+      const countryModal = document.getElementById("countryModal");
+      const countrySelect = document.getElementById("countrySelect");
+      const countryConfirmBtn = document.getElementById("countryConfirmBtn");
+
+      const attributeModal = document.getElementById("attributeModal");
+      const attributeSelect = document.getElementById("attributeSelect");
+      const attributeConfirmBtn = document.getElementById("attributeConfirmBtn");
+
+      const ruleModal = document.getElementById("ruleModal");
+      const ruleSelect = document.getElementById("ruleSelect");
+      const ruleConfirmBtn = document.getElementById("ruleConfirmBtn");
+
+      let dirty = false;
+      let activeCountryCode = "IN";
+
+      const countryConfigs = {
+        IN: { dirty: false },
+        GB: { dirty: false },
+        US: { dirty: false },
+        AE: { dirty: false },
+      };
+
+      function updateCounts() {
+        const mandatoryRows = mandatoryTable.querySelector("tbody").rows.length;
+        const complexRows = complexTable.querySelector("tbody").rows.length;
+        mandatoryCount.textContent = mandatoryRows;
+        complexCount.textContent = complexRows;
+      }
+
+      function setActiveTab(target) {
+        tabs.forEach((tab) => {
+          const t = tab.getAttribute("data-target");
+          tab.classList.toggle("is-active", t === target);
+        });
+
+        if (target === "mandatory") {
+          mandatoryTable.style.display = "";
+          complexTable.style.display = "none";
+          addAttributeBtn.disabled = false;
+          addRuleBtn.disabled = true;
+        } else {
+          mandatoryTable.style.display = "none";
+          complexTable.style.display = "";
+          addAttributeBtn.disabled = true;
+          addRuleBtn.disabled = false;
+        }
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const target = tab.getAttribute("data-target");
+          setActiveTab(target);
+        });
+      });
+
+      function markDirty() {
+        dirty = true;
+        countryConfigs[activeCountryCode] = countryConfigs[activeCountryCode] || {};
+        countryConfigs[activeCountryCode].dirty = true;
+        dirtyBanner.style.display = "flex";
+        dirtyCountryCodeSpan.textContent = activeCountryCode;
+        saveBtn.disabled = false;
+        discardBtn.disabled = false;
+      }
+
+      function clearDirty() {
+        dirty = false;
+        countryConfigs[activeCountryCode] = countryConfigs[activeCountryCode] || {};
+        countryConfigs[activeCountryCode].dirty = false;
+        dirtyBanner.style.display = "none";
+        saveBtn.disabled = true;
+        discardBtn.disabled = true;
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 1700);
+      }
+
+      // Delegate toggle changes
+      document.addEventListener("change", (e) => {
+        if (e.target.matches(".toggle input")) {
+          markDirty();
+        }
+      });
+
+      saveBtn.addEventListener("click", () => {
+        clearDirty();
+        showToast(`Saved config for ${activeCountryCode}`);
+      });
+
+      discardBtn.addEventListener("click", () => {
+        clearDirty(); // prototype only
+        showToast(`Discarded unsaved changes for ${activeCountryCode}`);
+      });
+
+      function getConfiguredCountryCodes() {
+        return Array.from(document.querySelectorAll(".country-item"))
+          .map(el => el.getAttribute("data-code"));
+      }
+
+      /* Modal helpers */
+      function openModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "flex";
+      }
+
+      function closeModal(id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+      }
+
+      document.addEventListener("click", (e) => {
+        const closeId = e.target.getAttribute("data-close");
+        if (closeId) {
+          closeModal(closeId);
+        }
+      });
+
+      /* Add Country – dropdown */
+      addCountryBtn.addEventListener("click", () => {
+        const configured = new Set(getConfiguredCountryCodes());
+        const available = COUNTRY_OPTIONS.filter(c => !configured.has(c.code));
+
+        if (available.length === 0) {
+          alert("All countries in the catalog are already configured.");
+          return;
+        }
+
+        countrySelect.innerHTML = "";
+        available.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.code;
+          opt.textContent = `${c.code} – ${c.name}`;
+          countrySelect.appendChild(opt);
+        });
+
+        openModal("countryModal");
+      });
+
+      countryConfirmBtn.addEventListener("click", () => {
+        const code = countrySelect.value;
+        if (!code) return;
+        const selected = COUNTRY_OPTIONS.find(c => c.code === code);
+        if (!selected) return;
+
+        countryConfigs[code] = { dirty: false };
+
+        const div = document.createElement("div");
+        div.className = "country-item";
+        div.setAttribute("data-code", code);
+        div.innerHTML = `
+          <div class="country-meta">
+            <span class="country-name">${selected.name}</span>
+            <span class="country-code">${selected.code} · ${selected.currency}</span>
+          </div>
+          <span class="badge-scheme">${selected.schemes}</span>
+        `;
+        countryList.appendChild(div);
+
+        closeModal("countryModal");
+        showToast(`Added country ${selected.code}`);
+      });
+
+      /* Delete Country */
+      deleteCountryBtn.addEventListener("click", () => {
+        const activeItem = document.querySelector(".country-item.is-active");
+        if (!activeItem) return;
+
+        const code = activeItem.getAttribute("data-code");
+        if (!confirm(`Delete configuration for ${code}?`)) return;
+
+        if (document.querySelectorAll(".country-item").length === 1) {
+          alert("At least one country must remain.");
+          return;
+        }
+
+        activeItem.remove();
+        delete countryConfigs[code];
+
+        const first = document.querySelector(".country-item");
+        first.classList.add("is-active");
+        activeCountryCode = first.getAttribute("data-code");
+        scopeChip.textContent = `Scope: ${activeCountryCode} · International`;
+        clearDirty();
+        showToast(`Deleted country ${code}`);
+      });
+
+      /* Country switching */
+      countryList.addEventListener("click", (e) => {
+        const item = e.target.closest(".country-item");
+        if (!item) return;
+
+        const newCode = item.getAttribute("data-code");
+        if (newCode === activeCountryCode) return;
+
+        if (dirty && !confirm(`You have unsaved changes for ${activeCountryCode}. Switch and discard changes?`)) {
+          return;
+        }
+
+        document.querySelectorAll(".country-item").forEach((el) => {
+          el.classList.toggle("is-active", el === item);
+        });
+
+        activeCountryCode = newCode;
+        scopeChip.textContent = `Scope: ${activeCountryCode} · International`;
+
+        dirty = countryConfigs[activeCountryCode]?.dirty || false;
+        if (dirty) {
+          dirtyBanner.style.display = "flex";
+          dirtyCountryCodeSpan.textContent = activeCountryCode;
+          saveBtn.disabled = false;
+          discardBtn.disabled = false;
+        } else {
+          clearDirty();
+        }
+      });
+
+      /* Add Attribute – dropdown (presence-only) */
+      function getExistingAttrIds() {
+        return Array.from(mandatoryTable.querySelectorAll("tbody tr"))
+          .map(tr => tr.getAttribute("data-attr-id"))
+          .filter(Boolean);
+      }
+
+      addAttributeBtn.addEventListener("click", () => {
+        const existing = new Set(getExistingAttrIds());
+        const available = ATTRIBUTE_CATALOG.filter(a => !existing.has(a.id));
+
+        if (available.length === 0) {
+          alert("All attributes in the catalog are already present.");
+          return;
+        }
+
+        attributeSelect.innerHTML = "";
+        available.forEach(a => {
+          const opt = document.createElement("option");
+          opt.value = a.id;
+          opt.textContent = `${a.label} (${a.id})`;
+          attributeSelect.appendChild(opt);
+        });
+
+        openModal("attributeModal");
+      });
+
+      attributeConfirmBtn.addEventListener("click", () => {
+        const id = attributeSelect.value;
+        if (!id) return;
+        const attr = ATTRIBUTE_CATALOG.find(a => a.id === id);
+        if (!attr) return;
+
+        const tbody = mandatoryTable.querySelector("tbody");
+
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-attr-id", id);
+        tr.innerHTML = `
+          <td>
+            ${attr.label}
+            <div class="muted">Field: <code>${attr.field}</code></div>
+          </td>
+          <td><span class="tag">${attr.level}</span></td>
+          <td>
+            <label class="toggle">
+              <input type="checkbox" />
+              <span class="toggle-track">
+                <span class="toggle-thumb"></span>
+              </span>
+              <span class="toggle-label">Optional</span>
+            </label>
+          </td>
+          <td><span class="tag-soft">Country only</span></td>
+        `;
+        tbody.appendChild(tr);
+        updateCounts();
+        markDirty();
+        closeModal("attributeModal");
+      });
+
+      /* Add Rule – dropdown */
+      function getExistingRuleBaseCodesForCountry() {
+        const rows = complexTable.querySelectorAll("tbody tr");
+        const res = [];
+        rows.forEach(tr => {
+          const code = tr.getAttribute("data-rule-code");
+          if (!code) return;
+          const prefix = `${activeCountryCode}_`;
+          if (code.startsWith(prefix)) {
+            res.push(code.substring(prefix.length));
+          }
+        });
+        return res;
+      }
+
+      addRuleBtn.addEventListener("click", () => {
+        const existingBase = new Set(getExistingRuleBaseCodesForCountry());
+        const available = RULE_CATALOG.filter(r => !existingBase.has(r.code));
+
+        if (available.length === 0) {
+          alert("All rules in the catalog are already present for this country.");
+          return;
+        }
+
+        ruleSelect.innerHTML = "";
+        available.forEach(r => {
+          const opt = document.createElement("option");
+          opt.value = r.code;
+          opt.textContent = `${r.name} (${r.code})`;
+          ruleSelect.appendChild(opt);
+        });
+
+        openModal("ruleModal");
+      });
+
+      ruleConfirmBtn.addEventListener("click", () => {
+        const baseCode = ruleSelect.value;
+        if (!baseCode) return;
+        const base = RULE_CATALOG.find(r => r.code === baseCode);
+        if (!base) return;
+
+        const tbody = complexTable.querySelector("tbody");
+        const countrySpecificCode = `${activeCountryCode}_${base.code}`;
+
+        const severityClass = base.defaultSeverity === "WARNING" ? "warning" : "error";
+        const severityLabel = base.defaultSeverity === "WARNING" ? "● Warning" : "● Error";
+
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-rule-code", countrySpecificCode);
+        tr.innerHTML = `
+          <td><code>${countrySpecificCode}</code></td>
+          <td>
+            ${base.name}
+            <div class="muted">${base.description}</div>
+          </td>
+          <td>
+            <span class="status-pill ${severityClass}">
+              ${severityLabel}
+            </span>
+          </td>
+          <td>
+            <div>International credits</div>
+            <div class="muted">Scope configurable in backend</div>
+          </td>
+          <td>
+            <label class="toggle">
+              <input type="checkbox" checked />
+              <span class="toggle-track">
+                <span class="toggle-thumb"></span>
+              </span>
+              <span class="toggle-label">Enabled</span>
+            </label>
+          </td>
+          <td>
+            Not yet deployed
+            <div class="muted">Draft</div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+        updateCounts();
+        markDirty();
+        closeModal("ruleModal");
+      });
+
+      // Initial
+      setActiveTab("mandatory");
+      updateCounts();
+    })();
+  </script>
+
+<!-- ================= INTEGRATED BUILD JSON MODAL ================= -->
+<div class="modal-backdrop" id="buildJsonModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Configure Complex Rule</div>
+      <button class="modal-close" onclick="closeBuildJson()">×</button>
+    </div>
+
+    <div class="modal-body">
+
+      <div class="field-label">Rule Type</div>
+      <select class="modal-select" id="bjRuleType">
+        <option value="">Select</option>
+        <option value="LOOKUP">Lookup</option>
+        <option value="ALLOWED_VALUES">Allowed Values</option>
+        <option value="CONDITIONAL_PRESENCE">Conditional Presence</option>
+        <option value="FORMAT">Format</option>
+        <option value="AMOUNT_BAND">Min / Max Amount</option>
+      </select>
+
+      <div id="bjParams"></div>
+
+      <div class="field-label" style="margin-top:12px;">Generated JSON</div>
+      <pre class="code-block" id="bjOutput">{}</pre>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-sm btn-sm-primary" onclick="saveRuleJson()">Save Rule</button>
+      <button class="btn-sm" onclick="closeBuildJson()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= BUILD JSON – INTEGRATED ================= */
+
+const REFERENCE_SETS = [
+  "IN_PURPOSE_CODE_REF",
+  "IN_TAX_CODE_REF",
+  "SWIFT_BIC_REF",
+  "SANCTIONS_COUNTRY_REF"
+];
+
+const CONDITION_OPERATORS = [
+  { op: "EQ", label: "Equals" },
+  { op: "NE", label: "Not Equals" },
+  { op: "IN", label: "In" },
+  { op: "NOT_IN", label: "Not In" }
+];
+
+let activeComplexRuleRow = null;
+
+/* ---------- Inject Configure column ---------- */
+(function () {
+  const headRow = document.querySelector("#complexTable thead tr");
+  if (!headRow.querySelector(".cfg-col")) {
+    const th = document.createElement("th");
+    th.textContent = "Configure";
+    th.className = "cfg-col";
+    headRow.appendChild(th);
+  }
+
+  document.querySelectorAll("#complexTable tbody tr").forEach(tr => {
+    if (!tr.querySelector(".cfg-col")) {
+      const td = document.createElement("td");
+      td.className = "cfg-col muted";
+      td.textContent = "—";
+      tr.appendChild(td);
+    }
+  });
+})();
+
+/* ---------- Add Build JSON to new rules ---------- */
+document.addEventListener("click", e => {
+  if (e.target.matches(".small-btn") &&
+      e.target.textContent.includes("Add New Rule Code")) {
+
+    setTimeout(() => {
+      const rows = document.querySelectorAll("#complexTable tbody tr");
+      const last = rows[rows.length - 1];
+      const td = document.createElement("td");
+      td.innerHTML = `<button class="small-btn">Build JSON</button>`;
+      td.onclick = () => openBuildJson(last);
+      last.appendChild(td);
+    }, 0);
+  }
+});
+
+/* ---------- Open ---------- */
+function openBuildJson(row) {
+  activeComplexRuleRow = row;
+  bjRuleType.value = row.dataset.ruleType || "";
+  bjParams.innerHTML = "";
+  bjOutput.textContent = row.dataset.ruleJson || "{}";
+  buildJsonModal.style.display = "flex";
+}
+
+function closeBuildJson() {
+  buildJsonModal.style.display = "none";
+}
+
+/* ---------- Field dropdown ---------- */
+function fieldDropdown(id) {
+  return `
+    <select class="modal-select" id="${id}" onchange="buildRuleJson()">
+      ${ATTRIBUTE_CATALOG.map(a =>
+        `<option value="${a.field}">
+          ${a.label} (${a.field})
+        </option>`
+      ).join("")}
+    </select>`;
+}
+
+/* ---------- Param rendering ---------- */
+bjRuleType.onchange = () => {
+  const t = bjRuleType.value;
+
+  if (t === "LOOKUP") {
+    bjParams.innerHTML = `
+      <div class="field-label">Field</div>${fieldDropdown("field")}
+      <div class="field-label">Reference Set</div>
+      <select class="modal-select" id="referenceSet" onchange="buildRuleJson()">
+        ${REFERENCE_SETS.map(r => `<option>${r}</option>`).join("")}
+      </select>`;
+  }
+
+  if (t === "ALLOWED_VALUES") {
+    bjParams.innerHTML = `
+      <div class="field-label">Field</div>${fieldDropdown("field")}
+      <div class="field-label">Allowed Values</div>
+      <input class="modal-select" id="allowedValues"
+             placeholder="OUR,SHA,BEN"
+             oninput="buildRuleJson()" />`;
+  }
+
+  if (t === "CONDITIONAL_PRESENCE") {
+    bjParams.innerHTML = `
+      <div class="field-label">Condition Field</div>${fieldDropdown("condField")}
+      <div class="field-label">Operator</div>
+      <select class="modal-select" id="operator" onchange="buildRuleJson()">
+        ${CONDITION_OPERATORS.map(o =>
+          `<option value="${o.op}">${o.label}</option>`
+        ).join("")}
+      </select>
+      <div class="field-label">Value(s)</div>
+      <input class="modal-select" id="condValue"
+             placeholder="IN,PK"
+             oninput="buildRuleJson()" />
+      <div class="field-label">Required Field</div>${fieldDropdown("reqField")}`;
+  }
+
+  if (t === "FORMAT") {
+    bjParams.innerHTML = `
+      <div class="field-label">Field</div>${fieldDropdown("field")}
+      <div class="field-label">Pattern</div>
+      <input class="modal-select" id="pattern"
+             placeholder="IBAN / SWIFT"
+             oninput="buildRuleJson()" />`;
+  }
+
+  if (t === "AMOUNT_BAND") {
+    bjParams.innerHTML = `
+      <div class="field-label">Min Amount</div>
+      <input class="modal-select" id="minAmount" oninput="buildRuleJson()" />
+      <div class="field-label">Max Amount</div>
+      <input class="modal-select" id="maxAmount" oninput="buildRuleJson()" />
+      <div class="field-label">Currency</div>
+      <input class="modal-select" id="currency" value="INR"
+             oninput="buildRuleJson()" />`;
+  }
+
+  buildRuleJson();
+};
+
+/* ---------- JSON build ---------- */
+function buildRuleJson() {
+  if (!activeComplexRuleRow) return;
+
+  const params = {};
+  bjParams.querySelectorAll("input,select").forEach(el => {
+    params[el.id] = el.value;
+  });
+
+  if (params.allowedValues) {
+    params.allowedValues =
+      params.allowedValues.split(",").map(v => v.trim());
+  }
+
+  if (bjRuleType.value === "CONDITIONAL_PRESENCE") {
+    params.condition = {
+      field: params.condField,
+      operator: params.operator,
+      values: params.condValue.split(",").map(v => v.trim())
+    };
+    delete params.condField;
+    delete params.operator;
+    delete params.condValue;
+  }
+
+  const json = {
+    ruleCode: activeComplexRuleRow.getAttribute("data-rule-code"),
+    ruleType: bjRuleType.value,
+    enabled: true,
+    parameters: params
+  };
+
+  bjOutput.textContent = JSON.stringify(json, null, 2);
+}
+
+/* ---------- Save ---------- */
+function saveRuleJson() {
+  activeComplexRuleRow.dataset.ruleJson = bjOutput.textContent;
+  activeComplexRuleRow.dataset.ruleType = bjRuleType.value;
+
+  // Update Configure column
+  const cfg = activeComplexRuleRow.querySelector(".cfg-col");
+  cfg.textContent = "Configured";
+
+  markDirty();
+  closeBuildJson();
+}
+</script>
+
+</body>
+</html>
